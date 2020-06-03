@@ -1,0 +1,14 @@
+package com.sfs
+
+class test{
+    int i;
+    int j;
+    int te(int k){
+
+    }
+
+    int ke(int j){
+        
+    }
+    
+}

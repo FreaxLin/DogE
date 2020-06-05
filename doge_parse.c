@@ -3,7 +3,7 @@
 #include "mpc.h"
 
 typedef struct class_field{
-      char* name;
+    char* name;
     char* type;
     void* value;
     struct class_field *next;

@@ -96,26 +96,7 @@ void parse_class(mpc_ast_t* t){
 
 int main(int argc, char **argv) {
       
-    // if (argc < 2){
-    //       puts("缺少doge文件路径");
-    //       return 0;
-    // }
-
-    // char* doge_path = argv[1];
-    // struct stat s_buf;
-    // stat(doge_path, &s_buf);
-    // char** file_paths[1];
-    // int file_number = 0;
-    // if (S_ISDIR(s_buf.st_mode)){
-
-    // }else{
-        
-    //       printf("%s\n", doge_path);
-    //       file_number++;
-    // }
-    // for (int i = 0; i < file_number; i++){
-    //       printf("%s\n", file_paths[0]);
-    // }
+    
     mpc_parser_t* Object        = mpc_new("object");
     mpc_parser_t* Ident         = mpc_new("ident");
     mpc_parser_t* Number        = mpc_new("number");

@@ -1,0 +1,65 @@
+> 
+  regex 
+  class|> 
+    string:2:1 'Class'
+    object|regex:2:7 'Test'
+    char:2:11 '{'
+    decls|> 
+      typeident|> 
+        string:3:5 'int'
+        ident|regex:3:9 'i'
+      char:3:10 ';'
+      typeident|> 
+        string:4:5 'int'
+        ident|regex:4:9 'j'
+      char:4:10 ';'
+    procedure|> 
+      string:5:5 'int'
+      ident|regex:5:9 'sf'
+      char:5:11 '('
+      args|typeident|> 
+        string:5:12 'int'
+        ident|regex:5:16 'i'
+      char:5:17 ')'
+      body|> 
+        char:5:18 '{'
+        decls|> 
+          typeident|> 
+            string:6:9 'int'
+            ident|regex:6:13 'i'
+          char:6:15 ';'
+        stmt|> 
+          ident|regex:7:9 'i'
+          char:7:11 '='
+          lexp|term|factor|number|regex:7:13 '0'
+          char:7:14 ';'
+        stmt|> 
+          string:8:9 'while'
+          char:8:15 '('
+          exp|> 
+            lexp|term|factor|ident|regex:8:16 'i'
+            string:8:18 '=='
+            lexp|term|factor|number|regex:8:21 '0'
+          char:8:22 ')'
+          stmt|> 
+            char:8:23 '{'
+            stmt|> 
+              object|regex:9:13 'Test'
+              ident|regex:9:18 's'
+              char:9:20 '='
+              string:9:22 'new'
+              object|regex:9:26 'Test'
+              char:9:30 '('
+              char:9:31 ')'
+              char:9:32 ';'
+            stmt|> 
+              ident|regex:10:13 's'
+              char:10:14 '.'
+              ident|regex:10:15 'sfs'
+              char:10:18 '('
+              char:10:19 ')'
+              char:10:20 ';'
+            char:11:9 '}'
+        char:12:5 '}'
+    char:13:1 '}'
+  regex 

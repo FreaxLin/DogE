@@ -1,0 +1,15 @@
+
+Class Test{
+    int m = 1;
+    int i;
+    int j; 
+    int sf(int i){
+        int i ;
+        i = 0;
+        while (i == 0){
+            Test s = new Test();
+            s.sfs();
+        }
+    }
+
+}

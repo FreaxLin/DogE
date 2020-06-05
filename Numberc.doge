@@ -1,14 +1,15 @@
-package com.sfs
 
-class test{
+Class Test{
+    int m = 1;
     int i;
-    int j;
-    int te(int k){
-
+    int j; 
+    int sf(int i){
+        int i ;
+        i = 0;
+        while (i == 0){
+            Test s = new Test();
+            s.sfs();
+        }
     }
 
-    int ke(int j){
-        
-    }
-    
 }

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <getopt.h>
+#include <stdlib.h>
+#include "doge_parse.h"
 
 static const struct option long_opts[] = {
     {"help", no_argument, NULL, 'h'},
@@ -22,11 +24,11 @@ int main(int argc, char **argv) {
     char *str;
     int c;
     int long_index;
-    
+    char* file_path;
     while(( c = getopt_long(argc, argv, "hc:m:", long_opts, &long_index)) != EOF){
         switch(c){
             case 'c':
-                printf("1: %s\n", optarg);
+                file_path = optarg;
                 break;
             case 'm':
                 str = optarg;
@@ -38,19 +40,21 @@ int main(int argc, char **argv) {
                 exit(1);
         }
     }
-    return 0;
-    // char* doge_path = argv[1];
-    // struct stat s_buf;
-    // stat(doge_path, &s_buf);
-    // char** file_paths[1];
-    // int file_number = 0;
-    // if (S_ISDIR(s_buf.st_mode)){
 
-    // }else{
-    //     printf("%s\n", doge_path);
-    //     file_number++;
-    // }
-    // for (int i = 0; i < file_number; i++){
-    //     printf("%s\n", file_paths[0]);
-    // }
+    struct stat s_buf;
+    stat(file_path, &s_buf);
+    char** file_paths[1];
+    int file_number = 0;
+    if (S_ISDIR(s_buf.st_mode)){
+        printf("目录:%s\n", file_path);
+    }else{
+        printf("%s\n", file_path);
+    }
+
+    init_parse();
+    parse_doge(file_path);
+    destory_parse();
+
+    return 0;
+    
 }

@@ -95,8 +95,42 @@ void destory_parse(){
     mpc_cleanup(17, Object, Ident, Number, Character, String, Factor, Term, Lexp, Stmt, Exp, Typeident, Decls, Args, Body, Procedure, Class, Doge);
 }
 
-void parse_typeident(){
-    
+void parse_stmt(){
+
+}
+
+void parse_procedure_body(){
+
+}
+
+
+CLASS_FIELD* parse_typeident(mpc_ast_t* typeident_info){
+    CLASS_FIELD* field = (CLASS_FIELD*) malloc(sizeof(CLASS_FIELD));
+    field->next = NULL;
+    field->type = typeident_info->children[0]->contents;
+    field->name = typeident_info->children[1]->contents;
+    if (typeident_info->children_num > 2){
+        char* type_tag = typeident_info->children[3]->tag;
+        if ((strstr(type_tag, "number") && strcmp(field->type, "int") == 0) || (strstr(type_tag, "char") && strcmp(field->type, "char"))){
+            field->value = typeident_info->children[3]->contents;
+        }
+    }
+    return field;
+}
+
+CLASS_FIELD* parse_arg(mpc_ast_t* args_info){
+    if (strstr(args_info->tag, "args|typeident")){
+        return parse_typeident(args_info);
+    }
+    int args_children_nums = args_info->children_num;
+    CLASS_FIELD header;
+    header.next = NULL;
+    for (int i = 0; i < args_children_nums; i++){
+        CLASS_FIELD* children_field = parse_typeident(args_info->children[i]);
+        children_field->next = header.next;
+        header.next = children_field;
+    }
+    return header.next;
 }
 
 CLASS_FIELD* parse_decls(mpc_ast_t* t){
@@ -106,32 +140,7 @@ CLASS_FIELD* parse_decls(mpc_ast_t* t){
     for (int i = 0; i < children_num; i++){
         char* children_tag = t->children[i]->tag;
         if (strstr(children_tag, "typeident")){
-            CLASS_FIELD* field = (CLASS_FIELD*) malloc(sizeof(CLASS_FIELD));
-            field->next = NULL;
-            mpc_ast_t* typeident_info = t->children[i];
-            int typeident_children_num = typeident_info->children_num;
-
-            for (int j = 0; j < typeident_children_num; j++){
-                if (strstr(typeident_info->children[j]->tag, "string")){
-                    field->type = typeident_info->children[j]->contents;
-                }
-                if (strstr(typeident_info->children[j]->tag, "ident")){
-                    field->name = typeident_info->children[j]->contents;
-                }
-                if (strstr(typeident_info->children[j]->tag, "char") && strcmp(typeident_info->children[j]->contents,"=") != 0){
-                    if (strcmp(field->type, "int") == 0){
-                        printf("%s不匹配%s\n", field->type, typeident_info->children[j]->contents);
-                        exit(1);
-                    }else{
-                        field->value = typeident_info->children[j]->contents;
-                    }
-                    
-                }
-                if (strstr(typeident_info->children[j]->tag, "number") && strcmp(field->type, "int") == 0){
-                    field->value = typeident_info->children[j]->contents;
-                }
-            
-            }
+            CLASS_FIELD* field = parse_typeident(t->children[i]);
             field->next = header->next;
             header->next = field;
         }

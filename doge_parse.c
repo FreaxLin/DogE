@@ -74,8 +74,8 @@ void init_parse(){
       "            | <lexp> \"!=\" <lexp>                                          \n"
       "            | <lexp> \"==\" <lexp> ;                                        \n"
       "                                                                            \n"
-      " typeident : (\"int\" | \"char\") <ident> ;                                 \n"
-      " decls     : (<typeident> ('=' (<number>|<character>))?';')* ;              \n"
+      " typeident : (\"int\" | \"char\") <ident> ('=' (<number>|<character>))?;    \n"
+      " decls     : (<typeident> ';')* ;                                           \n"
       " args        : <typeident>? (',' <typeident>)* ;                            \n"
       " body        : '{' <decls> <stmt>*'}' ;                                     \n"
       " procedure : (\"int\" | \"char\") <ident> '(' <args> ')' <body> ;           \n"
@@ -95,38 +95,48 @@ void destory_parse(){
     mpc_cleanup(17, Object, Ident, Number, Character, String, Factor, Term, Lexp, Stmt, Exp, Typeident, Decls, Args, Body, Procedure, Class, Doge);
 }
 
+void parse_typeident(){
+    
+}
 
 CLASS_FIELD* parse_decls(mpc_ast_t* t){
     int children_num = t->children_num;
-    CLASS_FIELD header;
-    CLASS_FIELD* result = &header;
+    CLASS_FIELD* header = (CLASS_FIELD*) malloc(sizeof(CLASS_FIELD));
+    header->next = NULL;
     for (int i = 0; i < children_num; i++){
         char* children_tag = t->children[i]->tag;
-        
-        CLASS_FIELD field;
-        header.next = &field;
         if (strstr(children_tag, "typeident")){
+            CLASS_FIELD* field = (CLASS_FIELD*) malloc(sizeof(CLASS_FIELD));
+            field->next = NULL;
             mpc_ast_t* typeident_info = t->children[i];
-            char* type = typeident_info->children[0]->contents;
-            char* ident_name = typeident_info->children[1]->contents;
-            field.name = ident_name;
-            field.type = type;
-        }
-        if (strstr(children_tag, "char") && strcmp(t->children[i]->contents, "=") == 0){
-            char* value = t->children[i+1]->contents;
+            int typeident_children_num = typeident_info->children_num;
+
+            for (int j = 0; j < typeident_children_num; j++){
+                if (strstr(typeident_info->children[j]->tag, "string")){
+                    field->type = typeident_info->children[j]->contents;
+                }
+                if (strstr(typeident_info->children[j]->tag, "ident")){
+                    field->name = typeident_info->children[j]->contents;
+                }
+                if (strstr(typeident_info->children[j]->tag, "char") && strcmp(typeident_info->children[j]->contents,"=") != 0){
+                    if (strcmp(field->type, "int") == 0){
+                        printf("%s不匹配%s\n", field->type, typeident_info->children[j]->contents);
+                        exit(1);
+                    }else{
+                        field->value = typeident_info->children[j]->contents;
+                    }
+                    
+                }
+                if (strstr(typeident_info->children[j]->tag, "number") && strcmp(field->type, "int") == 0){
+                    field->value = typeident_info->children[j]->contents;
+                }
             
-            if ((strstr(t->children[i+1]->tag, "number") && strcmp(field.type, "int") == 0) 
-                || (strstr(t->children[i+1]->tag, "character") && strcmp(field.type, "char") == 0)){
-                field.value = value;
-            }else{
-                printf("%s不匹配%s\n", field.type, value);
-                exit(1);
-            }            
+            }
+            field->next = header->next;
+            header->next = field;
         }
-        
-        header = *header.next;
     }
-    return result;
+    return header;
 }
 void parse_procedure(mpc_ast_t* t){
     int children_num = t->children_num;
@@ -139,26 +149,31 @@ void parse_procedure(mpc_ast_t* t){
 
 void parse_class(mpc_ast_t* t){
     int children_num = t->children_num;
-    for (int i = 0; i < children_num; i++){
-        if (strstr(t->children[i]->tag, "class")) {
-            mpc_ast_t* class_info = t->children[i];
-            int class_children_num = class_info->children_num;
-            for (int j = 0; j < class_children_num; j++){
-                char* tag_name = class_info->children[j]->tag;
-                if (strstr(tag_name, "object")){
-                    printf("类名%s\n", class_info->children[j]->contents);
+    if (strstr(t->children[1]->tag, "class")){
+        mpc_ast_t* class_info = t->children[1];
+        int class_children_num = class_info->children_num;
+        for (int i = 0; i < class_children_num; i++){
+            char* tag_name = class_info->children[i]->tag;
+            if (strstr(tag_name, "object")){
+                printf("类名%s\n", class_info->children[i]->contents);
+            }
+            if (strstr(tag_name, "decls")){
+                CLASS_FIELD* decls_point = parse_decls(class_info->children[i]);
+                CLASS_FIELD* decls_point_temp = decls_point->next;
+                while (decls_point_temp != NULL){
+                    printf("%s\n", decls_point_temp->name);
+                    decls_point_temp = decls_point_temp->next;
                 }
-                if (strstr(tag_name, "decls")){
-                    CLASS_FIELD* decls_point = parse_decls(class_info->children[j])->next;
-                    while (decls_point != NULL){
-                        printf("%s\n", decls_point->name);
-                        decls_point = decls_point->next;
-                    }
-                    
-                }
-                if (strstr(tag_name, "procedure")){
-                    parse_procedure(class_info->children[j]);
-                }
+                
+            }
+            if (strstr(tag_name, "procedure")){
+                // CLASS_FIELD* decls_point = parse_decls(class_info->children[j]);
+                // CLASS_FIELD* decls_point_temp = decls_point->next;
+                // while (decls_point_temp != NULL){
+                //     printf("%s\n", decls_point_temp->name);
+                //     decls_point_temp = decls_point_temp->next;
+                // }
+                
             }
         }
     }
@@ -170,7 +185,7 @@ int parse_doge(char* file) {
     FILE* fp = fopen(file,"rb");
     mpc_result_t r;
     if (mpc_parse_file("Numberc", fp, Doge, &r)) {
-        // parse_class(r.output);
+        parse_class(r.output);
         mpc_ast_print(r.output);
         mpc_ast_delete(r.output);
     } else {

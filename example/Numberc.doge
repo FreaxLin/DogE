@@ -3,7 +3,7 @@ Class Test{
     int m = 1;
     int i;
     int j; 
-    int sf(int i){
+    int sf(int i = 0){
         int i ;
         i = 0;
         while (i == 0){

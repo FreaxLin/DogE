@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
-#include <glib.h>
 
 typedef struct{
 
@@ -33,11 +32,6 @@ int main(int argc, char **argv){
     *value3 = 11;
     printf("%d\n", *(int*)(header + sizeof(OBJECT_HEADER)));
     printf("%c\n", *(char*)(header + sizeof(OBJECT_HEADER) + 1));
-    GHashTable* name_score = NULL;
-    int ret = 0;
-    name_score = g_hash_table_new(g_str_hash,g_str_equal);
-    g_hash_table_insert(name_score,"Bean","77");
-    char* result = g_hash_table_lookup(name_score, "Bean");
-    printf("%s\n", result);
+    
     return 0;
 }

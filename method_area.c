@@ -17,6 +17,8 @@ typedef struct{
 typedef struct{
     char* def_name;
     char* return_type;
+    int size;
+    int nums;
     arraylist* command_array;
 }def_meta;
 

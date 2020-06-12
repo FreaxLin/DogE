@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "extern_ dependency/hashtable.h"
 
 typedef struct {
     int* offset;
@@ -43,10 +44,8 @@ void push(int index){
 }
 
 
+
 int main(int argc, char **argv){
 
-    void (*pus)(int x);
-    pus = push;
-    pus(1);
-    printf("%s\n", *pus);
+    
 }

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "extern_ dependency/hashtable.h"
+#include "./extern_dependency/mpc.h"
 
 typedef struct {
     int* offset;
@@ -36,16 +36,23 @@ void destory_local_var(stack_slot* slot){
 typedef struct {
     stack_slot local_var_array;
     void* operate_stack;
-    
 }stack_frame;
 
 void push(int index){
-    printf("%d\n", index);
+    
 }
 
 
 
 int main(int argc, char **argv){
+    int x = 0;
+    int y = 1;
+    int c = x + y;
+    // set_0 0;
+    // set_1 1;
+    (1 + 2) * 3 / 2;
+    
+
 
     
 }

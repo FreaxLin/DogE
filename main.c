@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <getopt.h>
 #include <stdlib.h>
-#include "doge_parse.h"
+#include "dogec.h"
 
 static const struct option long_opts[] = {
     {"help", no_argument, NULL, 'h'},
@@ -20,6 +20,11 @@ void usage(){
 }
 
 int main(int argc, char **argv) {
+
+    if (argc == 1){
+        usage();
+        exit(1);
+    }
 
     char *str;
     int c;

@@ -56,9 +56,11 @@ int main(int argc, char **argv) {
         printf("%s\n", file_path);
     }
 
-    init_parse();
-    parse_doge(file_path);
-    destory_parse();
+    init_compile();
+    class_meta cm;
+    compile_doge(file_path);
+
+    destory_compile();
 
     return 0;
     

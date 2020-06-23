@@ -1,15 +1,19 @@
 
 Class Test{
-    int m = 1;
-    int i;
-    int j; 
-    int sf(int i = 0){
-        int i ;
-        i = 0;
-        while (i == 0){
-            Test s = new Test();
-            s.sfs();
+    int m;
+    int k = 1;
+    int compute(int i = 2){
+        m = i;
+        while(i < 10){
+            Test t = new Test();
+            m = m + i;
+            t.print(m);
+            i = i + 1;
         }
+    }
+
+    int print(int i){
+        system.print(i);
     }
 
 }

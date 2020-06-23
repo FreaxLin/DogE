@@ -1,26 +1,5 @@
 #include <stdio.h>
-#include "hashtable.h"
-#include "arraylist.h"
-
-typedef struct{
-    char* class_name;
-    hashtable* field_table;
-    hashtable* def_table;
-}class_meta;
-
-typedef struct{
-    char* field_name;
-    char* type;
-    int offset;
-}field_meta;
-
-typedef struct{
-    char* def_name;
-    char* return_type;
-    int size;
-    int nums;
-    arraylist* command_array;
-}def_meta;
+#include "method_area.h"
 
 static hashtable* class_meta_table;
 
@@ -32,6 +11,18 @@ void* get_class_info(char* class_name){
     return hashtable_get(class_meta_table, class_name);
 }
 
-int main(int argc, char **argv){
-    
+
+field_meta* field_meta_new(){
+    field_meta* fm = (field_meta*) malloc(sizeof(field_meta));
+    return fm;
+}
+
+void field_meta_delete(field_meta* fm){
+    if (fm->field_name != NULL){
+        free(fm->field_name);
+    }
+    if (fm->value != NULL){
+        free(fm->value);
+    }
+    free(fm);
 }

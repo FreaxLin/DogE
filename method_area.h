@@ -24,7 +24,8 @@ typedef struct{
     char* return_type;
     int size;
     int nums;
-    arraylist* command_array;
+    int command_count;
+    char** command_array;
 }def_meta;
 
 field_meta* field_meta_new();

@@ -95,12 +95,134 @@ void destory_compile(){
     mpc_cleanup(17, Object, Ident, Number, Character, String, Factor, Term, Lexp, Stmt, Exp, Typeident, Decls, Args, Body, Procedure, Class, Doge);
 }
 
-void compile_stmt(){
+char* generate_command(char* command_header, int position, void* value, char type){
+    int pos_size = 0;
+    char* p = NULL;
+    char* result = NULL;
+    if (position != -1){
+        char p[10];
+        char* p = sprintf(position);
+        pos_size = strlen(p);
+    }
+    if (value != NULL){
+        pos_size++;
+    }
+    char* temp = (char*) malloc(strlen(command_header) + pos_size);
+    strcpy(temp, command_header);
+    if (p != NULL){
+        strcat(temp, position);
+    }
+    if (value != NULL){
+        strcat(temp, "#");
+        if (type == 'I'){
+            char* value_temp = itoa(*((int*)value));
+            result = (char*) malloc(strlen(temp) + value_temp);
+            strcpy(result, temp);
+            strcat(result, value_temp);
+        }
+    }
+    free(temp);
+    return result;
+}
+
+void complie_exp(){
 
 }
 
-void compile_procedure_body(mpc_ast_t* body_info){
+typedef struct _BACKET{
+    char bracket;
+    struct _BACKET* next;
+}backet_stack;
 
+void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
+    int children_num = stmt_info->children_num;
+    int i = 0;
+    while (i < children_num){
+        char* tag = stmt_info->children[i]->tag;
+        if (strstr(tag, "string")){
+
+            //解析while循环体
+            if (strcmp("while", stmt_info->children[i]->contents) == 0){
+                int j = i + 1;
+                backet_stack header;
+                header.next = NULL;
+                if (strcmp(stmt_info->children[j]->contents, "(")){
+                    backet_stack bs;
+                    bs.bracket = '(';
+                    bs.next = header.next;
+                    header.next = &bs;
+                }
+                j++;
+                while (header.next != NULL){
+                    if (strcmp(stmt_info->children[j]->contents, "(")){
+                        backet_stack bs;
+                        bs.bracket = '(';
+                        bs.next = header.next;
+                        header.next = &bs;
+                    }
+                    if (strcmp(stmt_info->children[j]->contents, ")")){
+                        header.next = header.next->next;
+                    }
+                    if (strstr(stmt_info->children[j]->tag, "exp")){
+                        complie_exp(stmt_info->children[j]);
+                    }
+                    j++;
+                }
+                // compile_procedure_stmt(stmt_info->children[j]);
+                i = j;
+            }
+        }
+        i++;
+    }
+    
+}
+
+void compile_procedure_decls(mpc_ast_t* decls_info, def_meta* dm, hashtable* ht){
+    int children_num = decls_info->children_num;
+    int size = 0;
+    for (int i = 0; i < children_num; i++){
+        char* children_tag = decls_info->children[i]->tag;
+        if (strstr(children_tag, "typeident")){
+            field_meta* field = compile_typeident(decls_info->children[i]);
+            int field_size = 0;
+            if (field->type == 'I'){
+                field_size = sizeof(int);
+            }else if (field->type == 'C'){
+                field_size = sizeof(char);
+            }else{
+                field_size = sizeof(void*);
+            }
+            if (hashtable_get(ht, field->field_name) != NULL){
+                printf("重复定义:%s\n", field->field_name);
+            }else{
+                int* index = (int*) malloc(sizeof(int));
+                *index = dm->nums;
+                hashtable_set(ht, field->field_name, index);
+                dm->nums = dm->nums + 1;
+                dm->size = dm->size + field_size;
+                if (field->value != NULL){
+                    char* command = generate_command("set_", *index, field->value, field->type);
+                    printf("%s\n", command);
+                }
+            }
+        }
+    }
+}
+
+void compile_procedure_body(mpc_ast_t* body_info, def_meta* dm, hashtable* ht){
+    int body_children_num = body_info->children_num;
+
+    for (int i = 1; i < body_children_num - 1; i++){
+        char* tag = body_info->children[i]->tag;
+        if (strstr(tag, "decls")){
+            compile_procedure_decls(body_info->children[i], dm, ht);
+            continue;
+        }
+        // if (strstr(tag, "stmt")){
+        //     compile_procedure_stmt(body_info->children[i], dm, ht);
+        //     continue;
+        // }
+    }
 }
 
 /*
@@ -140,16 +262,13 @@ field_meta* compile_typeident(mpc_ast_t* typeident_info){
     return field;
 }
 
+typedef struct{
+    field_meta* fm;
+
+};
+
 field_meta* compile_arg(mpc_ast_t* args_info){
-    if (strstr(args_info->tag, "args|typeident")){
-        return compile_typeident(args_info);
-    }
-    int args_children_nums = args_info->children_num;
-    
-    for (int i = 0; i < args_children_nums; i++){
-        field_meta* children_field = compile_typeident(args_info->children[i]);
-    }
-    
+    return NULL;
 }
 
 int compile_decls(mpc_ast_t* t, hashtable* ft){
@@ -189,10 +308,22 @@ void compile_procedure(mpc_ast_t* t){
     strcpy(def_name, t->children[1]->contents);
     dm.def_name = def_name;
 
+    dm.nums = 0;
+    dm.size = 0;
+    dm.command_count = 0;
+
     //解析参数
     // field_meta* args = compile_arg(t->children[3]);
 
-    t->children[5];
+    //当没有参数时,方法体的索引位置为4
+    int body_index = 0;
+    if (strcmp(t->children[3], ")") == 0){
+        body_index = 4;
+    }else{
+        body_index = 5;
+    }
+    hashtable* ht = hashtable_create();
+    compile_procedure_body(t->children[body_index], &dm, ht);
 
     for (int i = 0; i < children_num; i++){
         

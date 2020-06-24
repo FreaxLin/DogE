@@ -2,18 +2,19 @@
 Class Test{
     int m;
     int k = 1;
-    int compute(int i = 2){
+    int compute(){
+        int i = 1;
         int j = 2;
         while(i < 10){
             Test t = new Test();
-            t.print(i);
+            t.out(i);
             i = i + j;
         }
         return 0;
     }
 
-    int print(int i){
-        system.print(i);
+    int out(int i){
+        print(i);
+        return 0;
     }
-
 }

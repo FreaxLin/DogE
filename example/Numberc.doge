@@ -3,13 +3,13 @@ Class Test{
     int m;
     int k = 1;
     int compute(int i = 2){
-        m = i;
+        int j = 2;
         while(i < 10){
             Test t = new Test();
-            m = m + i;
-            t.print(m);
-            i = i + 1;
+            t.print(i);
+            i = i + j;
         }
+        return 0;
     }
 
     int print(int i){

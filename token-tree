@@ -27,11 +27,13 @@
       char:5:26 ')'
       body|> 
         char:5:27 '{'
-        stmt|> 
-          ident|regex:6:9 'm'
-          char:6:11 '='
-          lexp|term|factor|ident|regex:6:13 'i'
-          char:6:14 ';'
+        decls|> 
+          typeident|> 
+            string:6:9 'int'
+            ident|regex:6:13 'j'
+            char:6:15 '='
+            number|regex:6:17 '2'
+          char:6:18 ';'
         stmt|> 
           string:7:9 'while'
           char:7:14 '('
@@ -52,30 +54,26 @@
               char:8:31 ')'
               char:8:32 ';'
             stmt|> 
-              ident|regex:9:13 'm'
-              char:9:15 '='
-              lexp|> 
-                term|factor|ident|regex:9:17 'm'
-                char:9:19 '+'
-                term|factor|ident|regex:9:21 'i'
-              char:9:22 ';'
+              ident|regex:9:13 't'
+              char:9:14 '.'
+              ident|regex:9:15 'print'
+              char:9:20 '('
+              ident|regex:9:21 'i'
+              char:9:22 ')'
+              char:9:23 ';'
             stmt|> 
-              ident|regex:10:13 't'
-              char:10:14 '.'
-              ident|regex:10:15 'print'
-              char:10:20 '('
-              ident|regex:10:21 'm'
-              char:10:22 ')'
-              char:10:23 ';'
-            stmt|> 
-              ident|regex:11:13 'i'
-              char:11:15 '='
+              ident|regex:10:13 'i'
+              char:10:15 '='
               lexp|> 
-                term|factor|ident|regex:11:17 'i'
-                char:11:19 '+'
-                term|factor|number|regex:11:21 '1'
-              char:11:22 ';'
-            char:12:9 '}'
+                term|factor|ident|regex:10:17 'i'
+                char:10:19 '+'
+                term|factor|ident|regex:10:21 'j'
+              char:10:22 ';'
+            char:11:9 '}'
+        stmt|> 
+          string:12:9 'return'
+          lexp|term|factor|number|regex:12:16 '0'
+          char:12:17 ';'
         char:13:5 '}'
     procedure|> 
       string:15:5 'int'

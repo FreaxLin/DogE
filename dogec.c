@@ -1,0 +1,256 @@
+#include <stdio.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include "dogec.h"
+
+static mpc_parser_t* Object;
+static mpc_parser_t* Ident;
+static mpc_parser_t* Number;
+static mpc_parser_t* Character;
+static mpc_parser_t* String;
+static mpc_parser_t* Factor;
+static mpc_parser_t* Term;
+static mpc_parser_t* Lexp;
+static mpc_parser_t* Stmt;
+static mpc_parser_t* Exp;
+static mpc_parser_t* Typeident;
+static mpc_parser_t* Decls;
+static mpc_parser_t* Args;
+static mpc_parser_t* Body;
+static mpc_parser_t* Procedure;
+static mpc_parser_t* Class;
+static mpc_parser_t* Doge;
+static mpc_err_t* err;
+
+void init_compile(){
+    Object        = mpc_new("object");
+    Ident         = mpc_new("ident");
+    Number        = mpc_new("number");
+    Character     = mpc_new("character");
+    String        = mpc_new("string");
+    Factor        = mpc_new("factor");
+    Term          = mpc_new("term");
+    Lexp          = mpc_new("lexp");
+    Stmt          = mpc_new("stmt");
+    Exp           = mpc_new("exp");
+    Typeident     = mpc_new("typeident");
+    Decls         = mpc_new("decls");
+    Args          = mpc_new("args");
+    Body          = mpc_new("body");
+    Procedure     = mpc_new("procedure");
+    Class         = mpc_new("class");
+    Doge          = mpc_new("doge");
+
+    err = mpca_lang(MPCA_LANG_DEFAULT,
+      " object      : /[A-Z][a-zA-Z]*/ ;                                           \n"
+      " ident     : /[a-z][a-zA-Z0-9_]*/ ;                                         \n"
+      " number      : /[0-9]+/ ;                                                   \n"
+      " character : /'.'/ ;                                                        \n"
+      " string      : /\"(\\\\.|[^\"])*\"/ ;                                       \n"
+      "                                                                            \n"
+      " factor      : '(' <lexp> ')'                                               \n"
+      "            | <number>                                                      \n"
+      "            | <character>                                                   \n"
+      "            | <string>                                                      \n"
+      "            | <ident> '(' <lexp>? (',' <lexp>)* ')'                         \n"
+      "            | <ident> ;                                                     \n"
+      "                                                                            \n"
+      " term        : <factor> (('*' | '/' | '%') <factor>)* ;                     \n"
+      " lexp        : <term> (('+' | '-') <term>)* ;                               \n"
+      "                                                                            \n"
+      " stmt        : '{' <stmt>* '}'                                              \n"
+      "            | \"while\" '(' <exp> ')' <stmt>                                \n"
+      "            | \"if\"      '(' <exp> ')' <stmt>                              \n"
+      "            | <ident> '=' <lexp> ';'                                        \n"
+      "            | \"print\" '(' <lexp>? ')' ';'                                 \n"
+      "            | \"return\" <lexp>? ';'                                        \n"
+      "            | (<ident>'.')? <ident> '(' <ident>? (',' <ident>)* ')' ';'     \n"
+      "            | <object> <ident> '=' \"new\" <object>'(' <args> ')' ';' ;     \n"
+      "                                                                            \n"
+      " exp        : <lexp> '>' <lexp>                                             \n"
+      "            | <lexp> '<' <lexp>                                             \n"
+      "            | <lexp> \">=\" <lexp>                                          \n"
+      "            | <lexp> \"<=\" <lexp>                                          \n"
+      "            | <lexp> \"!=\" <lexp>                                          \n"
+      "            | <lexp> \"==\" <lexp> ;                                        \n"
+      "                                                                            \n"
+      " typeident : (\"int\" | \"char\") <ident> ('=' (<number>|<character>))?;    \n"
+      " decls     : (<typeident> ';')* ;                                           \n"
+      " args        : <typeident>? (',' <typeident>)* ;                            \n"
+      " body        : '{' <decls> <stmt>*'}' ;                                     \n"
+      " procedure : (\"int\" | \"char\") <ident> '(' <args> ')' <body> ;           \n"
+      " class     : \"Class\" <object> '{' <decls><procedure>* '}';                \n"
+      " doge        : /^/ <class> /$/ ;                                            \n",
+      Object, Ident, Number, Character, String, Factor, Term, Lexp, Stmt, Exp, 
+      Typeident, Decls, Args, Body, Procedure, Class, Doge, NULL);
+
+    if (err != NULL) {
+        mpc_err_print(err);
+        mpc_err_delete(err);
+        exit(1);
+    }
+}
+
+void destory_compile(){
+    mpc_cleanup(17, Object, Ident, Number, Character, String, Factor, Term, Lexp, Stmt, Exp, Typeident, Decls, Args, Body, Procedure, Class, Doge);
+}
+
+void compile_stmt(){
+
+}
+
+void compile_procedure_body(mpc_ast_t* body_info){
+
+}
+
+/*
+ *  解析域值
+ */
+field_meta* compile_typeident(mpc_ast_t* typeident_info){
+    //为该类方法区分配域空间
+    field_meta* field = field_meta_new();
+    field->value = NULL;
+
+    //解析域类型
+    if (strcmp(typeident_info->children[0]->contents, "int") == 0){
+        field->type = 'I';
+    }else if (strcmp(typeident_info->children[9]->contents, "char") == 0){
+        field->type = 'C';
+    }else{
+        field->type = 'O';
+    }
+
+    //解析域名称
+    int name_lenght = strlen(typeident_info->children[1]->contents);
+    char* name = (char*) malloc(sizeof(char) * name_lenght);
+    strcpy(name, typeident_info->children[1]->contents);
+
+    field->field_name = name;
+
+    //解析域值
+    if (typeident_info->children_num > 2){
+        char* type_tag = typeident_info->children[3]->tag;
+        if ((strstr(type_tag, "number") && field->type == 'I') || (strstr(type_tag, "char") && field->type == 'C')){
+            int value_lenght = strlen(typeident_info->children[3]->contents);
+            void* value = malloc(sizeof(char) * value_lenght);
+            strcpy(value, typeident_info->children[3]->contents);
+            field->value = value;
+        }
+    }
+    return field;
+}
+
+field_meta* compile_arg(mpc_ast_t* args_info){
+    if (strstr(args_info->tag, "args|typeident")){
+        return compile_typeident(args_info);
+    }
+    int args_children_nums = args_info->children_num;
+    
+    for (int i = 0; i < args_children_nums; i++){
+        field_meta* children_field = compile_typeident(args_info->children[i]);
+    }
+    
+}
+
+int compile_decls(mpc_ast_t* t, hashtable* ft){
+    int children_num = t->children_num;
+    int size = 0;
+    for (int i = 0; i < children_num; i++){
+        char* children_tag = t->children[i]->tag;
+        if (strstr(children_tag, "typeident")){
+            field_meta* field = compile_typeident(t->children[i]);
+            int field_size = 0;
+            if (field->type == 'I'){
+                field_size = sizeof(int);
+            }else if (field->type == 'C'){
+                field_size = sizeof(char);
+            }else{
+                field_size = sizeof(void*);
+            }
+            field->offset = i * field_size;
+            size = size + field_size;
+            hashtable_set(ft, field->field_name, field);
+        }
+    }
+    return size;
+}
+
+void compile_procedure(mpc_ast_t* t){
+    int children_num = t->children_num;
+    def_meta dm;
+
+    //解析方法返回类型
+    char* def_type = (char*) malloc(sizeof(char) * strlen(t->children[0]->contents));
+    strcpy(def_type, t->children[0]->contents);
+    dm.return_type = def_type;
+
+    //解析方法名
+    char* def_name = (char*) malloc(sizeof(char) * strlen(t->children[1]->contents));
+    strcpy(def_name, t->children[1]->contents);
+    dm.def_name = def_name;
+
+    //解析参数
+    // field_meta* args = compile_arg(t->children[3]);
+
+    t->children[5];
+
+    for (int i = 0; i < children_num; i++){
+        
+        // printf("%s\n",t->children[i]->tag);
+        
+    }
+}
+
+class_meta compile_class(mpc_ast_t* t){
+    int children_num = t->children_num;
+    class_meta cm;
+    if (strstr(t->children[1]->tag, "class")){
+        mpc_ast_t* class_info = t->children[1];
+        int class_children_num = class_info->children_num;
+        hashtable* fb = hashtable_create();
+        cm.field_table = fb;
+        for (int i = 0; i < class_children_num; i++){
+            char* tag_name = class_info->children[i]->tag;
+            if (strstr(tag_name, "object")){
+                int class_name_lenght = strlen(class_info->children[i]->contents);
+                char* class_name = (char*) malloc(sizeof(char) * class_name_lenght);
+                strcpy(class_name, class_info->children[i]->contents);
+                cm.class_name = class_name;
+            }
+            if (strstr(tag_name, "decls")){
+                int field_size = compile_decls(class_info->children[i], fb);
+                cm.size = field_size;
+            }
+            if (strstr(tag_name, "procedure")){
+                compile_procedure(class_info->children[i]);
+                
+            }
+        }
+    }
+    return cm;
+}
+
+
+class_meta compile_doge(char* file) {
+            
+    FILE* fp = fopen(file,"rb");
+    mpc_result_t r;
+    class_meta cm;
+    if (mpc_parse_file("Numberc", fp, Doge, &r)) {
+        cm = compile_class(r.output);
+        // mpc_ast_print(r.output);
+        mpc_ast_delete(r.output);
+    } else {
+        mpc_err_print(r.error);
+        mpc_err_delete(r.error);
+    }
+    printf("%s\n", cm.class_name);
+    field_meta* value = (field_meta*)hashtable_get(cm.field_table, "k");
+    printf("%s\n", value->field_name);
+    printf("%c\n", value->type);
+    printf("%d\n", atoi(value->value));
+    printf("%d\n", cm.size);
+    fclose(fp);
+    return cm;
+    
+}

@@ -2,4 +2,4 @@
 #define _UTIL_C
 #endif 
 
-void str_to_int(char* str, int value);
+void int_to_str(char* str, int value);

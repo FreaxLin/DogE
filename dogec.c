@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include "dogec.h"
+#include "util.h"
 
 static mpc_parser_t* Object;
 static mpc_parser_t* Ident;
@@ -101,7 +102,7 @@ char* generate_command(char* command_header, int position, void* value, char typ
     char* result = NULL;
     if (position != -1){
         char p[10];
-        char* p = sprintf(position);
+        int_to_str(p, position);
         pos_size = strlen(p);
     }
     if (value != NULL){
@@ -110,19 +111,57 @@ char* generate_command(char* command_header, int position, void* value, char typ
     char* temp = (char*) malloc(strlen(command_header) + pos_size);
     strcpy(temp, command_header);
     if (p != NULL){
-        strcat(temp, position);
+        strcat(temp, p);
     }
     if (value != NULL){
         strcat(temp, "#");
         if (type == 'I'){
-            char* value_temp = itoa(*((int*)value));
-            result = (char*) malloc(strlen(temp) + value_temp);
+            char value_temp[20];
+            int_to_str(value_temp, *((int*)value));
+            result = (char*) malloc(strlen(temp) + strlen(value_temp));
             strcpy(result, temp);
             strcat(result, value_temp);
         }
     }
     free(temp);
     return result;
+}
+
+/*
+ *  解析域值
+ */
+field_meta* compile_typeident(mpc_ast_t* typeident_info){
+    //为该类方法区分配域空间
+    field_meta* field = field_meta_new();
+    field->value = NULL;
+
+    //解析域类型
+    if (strcmp(typeident_info->children[0]->contents, "int") == 0){
+        field->type = 'I';
+    }else if (strcmp(typeident_info->children[9]->contents, "char") == 0){
+        field->type = 'C';
+    }else{
+        field->type = 'O';
+    }
+
+    //解析域名称
+    int name_lenght = strlen(typeident_info->children[1]->contents);
+    char* name = (char*) malloc(sizeof(char) * name_lenght);
+    strcpy(name, typeident_info->children[1]->contents);
+
+    field->field_name = name;
+
+    //解析域值
+    if (typeident_info->children_num > 2){
+        char* type_tag = typeident_info->children[3]->tag;
+        if ((strstr(type_tag, "number") && field->type == 'I') || (strstr(type_tag, "char") && field->type == 'C')){
+            int value_lenght = strlen(typeident_info->children[3]->contents);
+            void* value = malloc(sizeof(char) * value_lenght);
+            strcpy(value, typeident_info->children[3]->contents);
+            field->value = value;
+        }
+    }
+    return field;
 }
 
 void complie_exp(){
@@ -135,45 +174,45 @@ typedef struct _BACKET{
 }backet_stack;
 
 void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
-    int children_num = stmt_info->children_num;
-    int i = 0;
-    while (i < children_num){
-        char* tag = stmt_info->children[i]->tag;
-        if (strstr(tag, "string")){
+    // int children_num = stmt_info->children_num;
+    // int i = 0;
+    // while (i < children_num){
+    //     char* tag = stmt_info->children[i]->tag;
+    //     if (strstr(tag, "string")){
 
-            //解析while循环体
-            if (strcmp("while", stmt_info->children[i]->contents) == 0){
-                int j = i + 1;
-                backet_stack header;
-                header.next = NULL;
-                if (strcmp(stmt_info->children[j]->contents, "(")){
-                    backet_stack bs;
-                    bs.bracket = '(';
-                    bs.next = header.next;
-                    header.next = &bs;
-                }
-                j++;
-                while (header.next != NULL){
-                    if (strcmp(stmt_info->children[j]->contents, "(")){
-                        backet_stack bs;
-                        bs.bracket = '(';
-                        bs.next = header.next;
-                        header.next = &bs;
-                    }
-                    if (strcmp(stmt_info->children[j]->contents, ")")){
-                        header.next = header.next->next;
-                    }
-                    if (strstr(stmt_info->children[j]->tag, "exp")){
-                        complie_exp(stmt_info->children[j]);
-                    }
-                    j++;
-                }
-                // compile_procedure_stmt(stmt_info->children[j]);
-                i = j;
-            }
-        }
-        i++;
-    }
+    //         //解析while循环体
+    //         if (strcmp("while", stmt_info->children[i]->contents) == 0){
+    //             int j = i + 1;
+    //             backet_stack header;
+    //             header.next = NULL;
+    //             if (strcmp(stmt_info->children[j]->contents, "(")){
+    //                 backet_stack bs;
+    //                 bs.bracket = '(';
+    //                 bs.next = header.next;
+    //                 header.next = &bs;
+    //             }
+    //             j++;
+    //             while (header.next != NULL){
+    //                 if (strcmp(stmt_info->children[j]->contents, "(")){
+    //                     backet_stack bs;
+    //                     bs.bracket = '(';
+    //                     bs.next = header.next;
+    //                     header.next = &bs;
+    //                 }
+    //                 if (strcmp(stmt_info->children[j]->contents, ")")){
+    //                     header.next = header.next->next;
+    //                 }
+    //                 if (strstr(stmt_info->children[j]->tag, "exp")){
+    //                     complie_exp(stmt_info->children[j]);
+    //                 }
+    //                 j++;
+    //             }
+    //             // compile_procedure_stmt(stmt_info->children[j]);
+    //             i = j;
+    //         }
+    //     }
+    //     i++;
+    // }
     
 }
 
@@ -225,47 +264,12 @@ void compile_procedure_body(mpc_ast_t* body_info, def_meta* dm, hashtable* ht){
     }
 }
 
-/*
- *  解析域值
- */
-field_meta* compile_typeident(mpc_ast_t* typeident_info){
-    //为该类方法区分配域空间
-    field_meta* field = field_meta_new();
-    field->value = NULL;
 
-    //解析域类型
-    if (strcmp(typeident_info->children[0]->contents, "int") == 0){
-        field->type = 'I';
-    }else if (strcmp(typeident_info->children[9]->contents, "char") == 0){
-        field->type = 'C';
-    }else{
-        field->type = 'O';
-    }
 
-    //解析域名称
-    int name_lenght = strlen(typeident_info->children[1]->contents);
-    char* name = (char*) malloc(sizeof(char) * name_lenght);
-    strcpy(name, typeident_info->children[1]->contents);
+// typedef struct{
+//     field_meta* fm;
 
-    field->field_name = name;
-
-    //解析域值
-    if (typeident_info->children_num > 2){
-        char* type_tag = typeident_info->children[3]->tag;
-        if ((strstr(type_tag, "number") && field->type == 'I') || (strstr(type_tag, "char") && field->type == 'C')){
-            int value_lenght = strlen(typeident_info->children[3]->contents);
-            void* value = malloc(sizeof(char) * value_lenght);
-            strcpy(value, typeident_info->children[3]->contents);
-            field->value = value;
-        }
-    }
-    return field;
-}
-
-typedef struct{
-    field_meta* fm;
-
-};
+// };
 
 field_meta* compile_arg(mpc_ast_t* args_info){
     return NULL;
@@ -317,7 +321,7 @@ void compile_procedure(mpc_ast_t* t){
 
     //当没有参数时,方法体的索引位置为4
     int body_index = 0;
-    if (strcmp(t->children[3], ")") == 0){
+    if (strcmp(t->children[3]->contents, ")") == 0){
         body_index = 4;
     }else{
         body_index = 5;

@@ -1,5 +1,5 @@
 
-void str_to_int(char* str, int value){
+void int_to_str(char* str, int value){
     int temp = value % 10;
     int i = 0;
     while (temp != 0){  

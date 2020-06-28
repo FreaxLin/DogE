@@ -29,3 +29,5 @@ typedef struct{
 }def_meta;
 
 field_meta* field_meta_new();
+
+void command_array_expansion(char** command_array);

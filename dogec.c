@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <string.h>
 #include "dogec.h"
 #include "util.h"
 
@@ -96,13 +97,13 @@ void destory_compile(){
     mpc_cleanup(17, Object, Ident, Number, Character, String, Factor, Term, Lexp, Stmt, Exp, Typeident, Decls, Args, Body, Procedure, Class, Doge);
 }
 
-char* generate_command(char* command_header, int position, void* value, char type){
-    int pos_size = 0;
-    char* p = NULL;
+char* generate_command(char* command_header, int position, void* value){
+    int pos_size = 1;
+    char p[10];
     char* result = NULL;
     if (position != -1){
-        char p[10];
-        int_to_str(p, position);
+        sprintf(p, "%d", position);
+        // int_to_str(p, position);
         pos_size = strlen(p);
     }
     if (value != NULL){
@@ -110,18 +111,15 @@ char* generate_command(char* command_header, int position, void* value, char typ
     }
     char* temp = (char*) malloc(strlen(command_header) + pos_size);
     strcpy(temp, command_header);
-    if (p != NULL){
-        strcat(temp, p);
-    }
+    strcat(temp, p);
+    
     if (value != NULL){
         strcat(temp, "#");
-        if (type == 'I'){
-            char value_temp[20];
-            int_to_str(value_temp, *((int*)value));
-            result = (char*) malloc(strlen(temp) + strlen(value_temp));
-            strcpy(result, temp);
-            strcat(result, value_temp);
-        }
+    
+        result = (char*) malloc(strlen(temp) + strlen(value));
+        strcpy(result, temp);
+        strcat(result, value);
+        
     }
     free(temp);
     return result;
@@ -164,8 +162,25 @@ field_meta* compile_typeident(mpc_ast_t* typeident_info){
     return field;
 }
 
-void complie_exp(){
-
+char* complie_exp(mpc_ast_t* exp_info, hashtable* ht){
+    int children_num = exp_info->children_num;
+    int index;
+    char* command_header;
+    for (int i = 0; i < children_num; i++){
+        char* tag = exp_info->children[i]->tag;
+        
+        if (strstr(tag, "lexp|term|factor|ident")){
+            index = *(int*)hashtable_get(ht, exp_info->children[i]->contents);
+        }
+        if (strstr(tag, "char") && strcmp("<", exp_info->children[i]->contents) == 0){
+            command_header = "st_";
+        }
+        if (strstr(tag, "lexp|term|factor|number")){
+            char* command = generate_command(command_header, index, exp_info->children[i]->contents);
+            return command;
+        }
+    }
+    return NULL;
 }
 
 typedef struct _BACKET{
@@ -173,46 +188,49 @@ typedef struct _BACKET{
     struct _BACKET* next;
 }backet_stack;
 
-void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
-    // int children_num = stmt_info->children_num;
-    // int i = 0;
-    // while (i < children_num){
-    //     char* tag = stmt_info->children[i]->tag;
-    //     if (strstr(tag, "string")){
 
-    //         //解析while循环体
-    //         if (strcmp("while", stmt_info->children[i]->contents) == 0){
-    //             int j = i + 1;
-    //             backet_stack header;
-    //             header.next = NULL;
-    //             if (strcmp(stmt_info->children[j]->contents, "(")){
-    //                 backet_stack bs;
-    //                 bs.bracket = '(';
-    //                 bs.next = header.next;
-    //                 header.next = &bs;
-    //             }
-    //             j++;
-    //             while (header.next != NULL){
-    //                 if (strcmp(stmt_info->children[j]->contents, "(")){
-    //                     backet_stack bs;
-    //                     bs.bracket = '(';
-    //                     bs.next = header.next;
-    //                     header.next = &bs;
-    //                 }
-    //                 if (strcmp(stmt_info->children[j]->contents, ")")){
-    //                     header.next = header.next->next;
-    //                 }
-    //                 if (strstr(stmt_info->children[j]->tag, "exp")){
-    //                     complie_exp(stmt_info->children[j]);
-    //                 }
-    //                 j++;
-    //             }
-    //             // compile_procedure_stmt(stmt_info->children[j]);
-    //             i = j;
-    //         }
-    //     }
-    //     i++;
-    // }
+
+void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
+    int children_num = stmt_info->children_num;
+    int i = 0;
+    while (i < children_num){
+        char* tag = stmt_info->children[i]->tag;
+        if (strstr(tag, "string")){
+
+            //解析while循环体
+            if (strcmp("while", stmt_info->children[i]->contents) == 0){
+                int j = i + 1;
+                backet_stack header;
+                header.next = NULL;
+                if (strcmp(stmt_info->children[j]->contents, "(") == 0){
+                    backet_stack bs;
+                    bs.bracket = '(';
+                    bs.next = header.next;
+                    header.next = &bs;
+                }
+                j++;
+                while (header.next != NULL){
+                    if (strcmp(stmt_info->children[j]->contents, "(") == 0){
+                        backet_stack bs;
+                        bs.bracket = '(';
+                        bs.next = header.next;
+                        header.next = &bs;
+                    }
+                    if (strcmp(stmt_info->children[j]->contents, ")") == 0){
+                        header.next = header.next->next;
+                    }
+                    if (strstr(stmt_info->children[j]->tag, "exp")){
+                        dm->command_array[dm->command_count] = complie_exp(stmt_info->children[j], ht);
+                        dm->command_count = dm->command_count + 1;
+                    }
+                    j++;
+                }
+                compile_procedure_stmt(stmt_info->children[j], dm, ht);
+                i = j;
+            }
+        }
+        i++;
+    }
     
 }
 
@@ -237,12 +255,14 @@ void compile_procedure_decls(mpc_ast_t* decls_info, def_meta* dm, hashtable* ht)
                 int* index = (int*) malloc(sizeof(int));
                 *index = dm->nums;
                 hashtable_set(ht, field->field_name, index);
+            
+                if (field->value != NULL){
+                    char* command = generate_command("set_", *index, field->value);
+                    dm->command_array[dm->command_count] = command;
+                    dm->command_count = dm->command_count + 1;
+                }
                 dm->nums = dm->nums + 1;
                 dm->size = dm->size + field_size;
-                if (field->value != NULL){
-                    char* command = generate_command("set_", *index, field->value, field->type);
-                    printf("%s\n", command);
-                }
             }
         }
     }
@@ -257,10 +277,10 @@ void compile_procedure_body(mpc_ast_t* body_info, def_meta* dm, hashtable* ht){
             compile_procedure_decls(body_info->children[i], dm, ht);
             continue;
         }
-        // if (strstr(tag, "stmt")){
-        //     compile_procedure_stmt(body_info->children[i], dm, ht);
-        //     continue;
-        // }
+        if (strstr(tag, "stmt")){
+            compile_procedure_stmt(body_info->children[i], dm, ht);
+            continue;
+        }
     }
 }
 
@@ -298,23 +318,27 @@ int compile_decls(mpc_ast_t* t, hashtable* ft){
     return size;
 }
 
-void compile_procedure(mpc_ast_t* t){
+void compile_procedure(mpc_ast_t* t, hashtable* ht){
     int children_num = t->children_num;
-    def_meta dm;
-
+    def_meta* dm = (def_meta*) malloc(sizeof(def_meta));
     //解析方法返回类型
     char* def_type = (char*) malloc(sizeof(char) * strlen(t->children[0]->contents));
     strcpy(def_type, t->children[0]->contents);
-    dm.return_type = def_type;
+    dm->return_type = def_type;
 
     //解析方法名
     char* def_name = (char*) malloc(sizeof(char) * strlen(t->children[1]->contents));
     strcpy(def_name, t->children[1]->contents);
-    dm.def_name = def_name;
+    dm->def_name = def_name;
+    hashtable_set(ht, dm->def_name, dm);
 
-    dm.nums = 0;
-    dm.size = 0;
-    dm.command_count = 0;
+
+    dm->nums = 0;
+    dm->size = 0;
+    dm->command_count = 0;
+    dm->command_array = (char **) malloc(10 * sizeof(char *));
+
+    
 
     //解析参数
     // field_meta* args = compile_arg(t->children[3]);
@@ -326,8 +350,7 @@ void compile_procedure(mpc_ast_t* t){
     }else{
         body_index = 5;
     }
-    hashtable* ht = hashtable_create();
-    compile_procedure_body(t->children[body_index], &dm, ht);
+    compile_procedure_body(t->children[body_index], dm, ht);
 
     for (int i = 0; i < children_num; i++){
         
@@ -344,6 +367,8 @@ class_meta compile_class(mpc_ast_t* t){
         int class_children_num = class_info->children_num;
         hashtable* fb = hashtable_create();
         cm.field_table = fb;
+        hashtable* def_ht = hashtable_create();
+        cm.def_table = def_ht;
         for (int i = 0; i < class_children_num; i++){
             char* tag_name = class_info->children[i]->tag;
             if (strstr(tag_name, "object")){
@@ -357,7 +382,7 @@ class_meta compile_class(mpc_ast_t* t){
                 cm.size = field_size;
             }
             if (strstr(tag_name, "procedure")){
-                compile_procedure(class_info->children[i]);
+                compile_procedure(class_info->children[i], def_ht);
                 
             }
         }
@@ -383,7 +408,9 @@ class_meta compile_doge(char* file) {
     field_meta* value = (field_meta*)hashtable_get(cm.field_table, "k");
     printf("%s\n", value->field_name);
     printf("%c\n", value->type);
-    printf("%d\n", atoi(value->value));
+    def_meta* def_value = (def_meta*)hashtable_get(cm.def_table, "compute");
+    printf("%s\n", def_value->command_array[2]);
+    // printf("%d\n", atoi(value->value));
     printf("%d\n", cm.size);
     fclose(fp);
     return cm;

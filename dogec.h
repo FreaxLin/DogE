@@ -32,6 +32,6 @@ typedef struct {
 void init_compile();
 void destory_compile();
 int compile_decls(mpc_ast_t* t, hashtable* ft);
-void compile_procedure(mpc_ast_t* t);
+void compile_procedure(mpc_ast_t* t, hashtable* ft);
 class_meta compile_class(mpc_ast_t* t);
 class_meta compile_doge(char* file);

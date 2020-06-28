@@ -10,6 +10,10 @@ typedef struct{
     int size;
     hashtable* field_table;
     hashtable* def_table;
+    int field_count;
+    int def_count;
+    char** field_array;
+    char** def_array;
 }class_meta;
 
 typedef struct{

@@ -100,6 +100,9 @@ void destory_compile(){
 char* generate_command(char* command_header, int position, void* value){
     int pos_size = 1;
     char p[10];
+    for (int i = 0; i < 10; i++){
+        p[i] = '\0';
+    }
     char* result = NULL;
     if (position != -1){
         sprintf(p, "%d", position);
@@ -111,15 +114,20 @@ char* generate_command(char* command_header, int position, void* value){
     }
     char* temp = (char*) malloc(strlen(command_header) + pos_size);
     strcpy(temp, command_header);
-    strcat(temp, p);
+    if (strlen(p) > 0){
+        strcat(temp, p);
+    }
+    
     
     if (value != NULL){
         strcat(temp, "#");
-    
         result = (char*) malloc(strlen(temp) + strlen(value));
         strcpy(result, temp);
         strcat(result, value);
         
+    }else{
+        result = (char*) malloc(strlen(temp) + 1);
+        strcpy(result, temp);
     }
     free(temp);
     return result;
@@ -188,6 +196,36 @@ typedef struct _BACKET{
     struct _BACKET* next;
 }backet_stack;
 
+void complie_lexp(mpc_ast_t* lexp_info, def_meta* dm, hashtable* ht){
+    // int children_num = lexp_info->children_num;
+    // for (int i = 0; i < children_num; i++){
+    //     char* tag = lexp_info->children[i]->tag;
+    //     if (strstr(tag, "term|factor|ident")){
+    //         int index = *(int*)hashtable_get(ht, lexp_info->children[i]->contents);
+    //         char* command = generate_command("push_", index, NULL);
+    //         printf("%s\n", command);
+    //     }
+    //     if (strstr(tag, "char") && strcmp("+", lexp_info->children[i]->contents) == 0){
+    //         char* command = generate_command("add", -1, NULL);
+    //         printf("%s\n", command);
+    //     }
+    // }
+    int index = *(int*)hashtable_get(ht, lexp_info->children[0]->contents);
+    char* first_param = generate_command("push_", index, NULL);
+    // printf("%s\n", first_param);
+    dm->command_array[dm->command_count] = first_param;
+    dm->command_count = dm->command_count + 1;
+    index = *(int*)hashtable_get(ht, lexp_info->children[2]->contents);
+    char* second_param = generate_command("push_", index, NULL);
+    // printf("%s\n", second_param);
+    dm->command_array[dm->command_count] = second_param;
+    dm->command_count = dm->command_count + 1;
+    char* operation = generate_command("add", -1, NULL);
+    // printf("%s\n", operation);
+    dm->command_array[dm->command_count] = operation;
+    dm->command_count = dm->command_count + 1;
+
+}
 
 
 void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
@@ -195,10 +233,16 @@ void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
     int i = 0;
     while (i < children_num){
         char* tag = stmt_info->children[i]->tag;
+
+        if (strstr(tag, "stmt")){
+            compile_procedure_stmt(stmt_info->children[i], dm, ht);
+        }
+
         if (strstr(tag, "string")){
 
             //解析while循环体
             if (strcmp("while", stmt_info->children[i]->contents) == 0){
+                int loop_start;
                 int j = i + 1;
                 backet_stack header;
                 header.next = NULL;
@@ -221,13 +265,103 @@ void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
                     }
                     if (strstr(stmt_info->children[j]->tag, "exp")){
                         dm->command_array[dm->command_count] = complie_exp(stmt_info->children[j], ht);
+                        // printf("%s\n", dm->command_array[dm->command_count]);
+                        loop_start = dm->command_count; 
                         dm->command_count = dm->command_count + 1;
                     }
                     j++;
                 }
+                char temp[10];
+                sprintf(temp, "%d", dm->command_count + 1);
+                dm->command_array[dm->command_count] = generate_command("jump", -1, temp);
+                // printf("%s\n", dm->command_array[dm->command_count]);
+                dm->command_count = dm->command_count + 1;
                 compile_procedure_stmt(stmt_info->children[j], dm, ht);
+                sprintf(temp, "%d", loop_start);
+                char* jump = generate_command("jump", -1, temp);
+                dm->command_array[dm->command_count] = jump;
+                // printf("%s\n", dm->command_array[dm->command_count]);
+                dm->command_count = dm->command_count + 1;
+                sprintf(temp, "%d", dm->command_count);
+                char* out_loop = generate_command(dm->command_array[loop_start + 1], -1, temp);
+                free(dm->command_array[loop_start + 1]);
+                dm->command_array[loop_start + 1] = out_loop;
+                // printf("%s\n", dm->command_array[loop_start + 1]);
                 i = j;
             }
+
+            if (strcmp("print", stmt_info->children[i]->contents) == 0){
+                int j = i;
+                int* pos;
+                while (strcmp(stmt_info->children[j]->contents, ";") != 0){
+                    if (strstr(stmt_info->children[j]->tag, "lexp|term|factor|ident")){
+                        char* ident = stmt_info->children[j]->contents;
+                        pos = (int*)hashtable_get(ht, ident);
+                        
+                    }
+                    j++;
+                }
+                
+                char* command = generate_command("print_", *pos, NULL);
+                // printf("%s\n", command);
+                dm->command_array[dm->command_count] = command;
+                dm->command_count = dm->command_count + 1;
+                i = j;
+            }
+           
+        }
+        
+        if (strstr(tag, "object")){
+            int j = i;
+            char* class_name = stmt_info->children[j]->contents;
+            while (strcmp(stmt_info->children[j]->contents, ";") != 0){
+                
+                if (strstr(stmt_info->children[j]->tag, "ident")){
+                    if (hashtable_get(ht, stmt_info->children[j]->contents) != NULL){
+                        printf("重复定义:%s\n", stmt_info->children[j]->contents);
+                    }else{
+                        int* index = (int*) malloc(sizeof(int));
+                        *index = dm->nums;
+                        hashtable_set(ht, stmt_info->children[j]->contents, index);
+                    
+                        dm->nums = dm->nums + 1;
+                        dm->size = dm->size + sizeof(void*);
+                    }                    
+                }
+
+                j++;
+            }
+
+            char* command = generate_command("set_", dm->nums - 1, NULL);
+           
+            char* new_command = (char*) malloc(6 + strlen(class_name));
+            strcpy(new_command, "#init#");
+            strcat(new_command, class_name);
+            dm->command_array[dm->command_count] = new_command;
+            dm->command_count = dm->command_count + 1;
+            dm->command_array[dm->command_count] = command;
+            dm->command_count = dm->command_count + 1;
+            // printf("%s\n", new_command);
+            //  printf("%s\n", command);
+            i = j;
+            
+        }
+        
+        if (strstr(tag, "ident")){
+            int j = i;
+            char* ident = stmt_info->children[j]->contents;
+            while (strcmp(stmt_info->children[j]->contents, ";") != 0){
+                if (strstr(stmt_info->children[j]->tag, "lexp")){
+                    complie_lexp(stmt_info->children[j], dm, ht);
+                }
+                j++;
+            }
+            int index = *(int*)hashtable_get(ht, ident);
+            char* command = generate_command("set_", index, NULL);
+            // printf("%s\n", command);
+            dm->command_array[dm->command_count] = command;
+            dm->command_count = dm->command_count + 1;
+            i = j;
         }
         i++;
     }
@@ -258,6 +392,7 @@ void compile_procedure_decls(mpc_ast_t* decls_info, def_meta* dm, hashtable* ht)
             
                 if (field->value != NULL){
                     char* command = generate_command("set_", *index, field->value);
+                    // printf("%s\n", command);
                     dm->command_array[dm->command_count] = command;
                     dm->command_count = dm->command_count + 1;
                 }
@@ -295,13 +430,15 @@ field_meta* compile_arg(mpc_ast_t* args_info){
     return NULL;
 }
 
-int compile_decls(mpc_ast_t* t, hashtable* ft){
+int compile_decls(mpc_ast_t* t, class_meta* cm, hashtable* ft){
     int children_num = t->children_num;
     int size = 0;
     for (int i = 0; i < children_num; i++){
         char* children_tag = t->children[i]->tag;
         if (strstr(children_tag, "typeident")){
             field_meta* field = compile_typeident(t->children[i]);
+            cm->field_array[cm->field_count] = field->field_name;
+            cm->field_count = cm->field_count + 1;
             int field_size = 0;
             if (field->type == 'I'){
                 field_size = sizeof(int);
@@ -313,12 +450,13 @@ int compile_decls(mpc_ast_t* t, hashtable* ft){
             field->offset = i * field_size;
             size = size + field_size;
             hashtable_set(ft, field->field_name, field);
+
         }
     }
     return size;
 }
 
-void compile_procedure(mpc_ast_t* t, hashtable* ht){
+void compile_procedure(mpc_ast_t* t, class_meta* cm, hashtable* ht){
     int children_num = t->children_num;
     def_meta* dm = (def_meta*) malloc(sizeof(def_meta));
     //解析方法返回类型
@@ -331,14 +469,12 @@ void compile_procedure(mpc_ast_t* t, hashtable* ht){
     strcpy(def_name, t->children[1]->contents);
     dm->def_name = def_name;
     hashtable_set(ht, dm->def_name, dm);
-
-
+    cm->def_array[cm->def_count] = dm->def_name;
+    cm->def_count = cm->def_count + 1;
     dm->nums = 0;
     dm->size = 0;
     dm->command_count = 0;
-    dm->command_array = (char **) malloc(10 * sizeof(char *));
-
-    
+    dm->command_array = (char**) malloc(20 * sizeof(char *));
 
     //解析参数
     // field_meta* args = compile_arg(t->children[3]);
@@ -350,7 +486,8 @@ void compile_procedure(mpc_ast_t* t, hashtable* ht){
     }else{
         body_index = 5;
     }
-    compile_procedure_body(t->children[body_index], dm, ht);
+    hashtable* table_index = hashtable_create();
+    compile_procedure_body(t->children[body_index], dm, table_index);
 
     for (int i = 0; i < children_num; i++){
         
@@ -369,6 +506,10 @@ class_meta compile_class(mpc_ast_t* t){
         cm.field_table = fb;
         hashtable* def_ht = hashtable_create();
         cm.def_table = def_ht;
+        cm.def_array = (char**) malloc(10 * sizeof(char *));
+        cm.field_array = (char**) malloc(10 * sizeof(char *));
+        cm.def_count = 0;
+        cm.field_count = 0;
         for (int i = 0; i < class_children_num; i++){
             char* tag_name = class_info->children[i]->tag;
             if (strstr(tag_name, "object")){
@@ -378,11 +519,11 @@ class_meta compile_class(mpc_ast_t* t){
                 cm.class_name = class_name;
             }
             if (strstr(tag_name, "decls")){
-                int field_size = compile_decls(class_info->children[i], fb);
+                int field_size = compile_decls(class_info->children[i], &cm, fb);
                 cm.size = field_size;
             }
             if (strstr(tag_name, "procedure")){
-                compile_procedure(class_info->children[i], def_ht);
+                compile_procedure(class_info->children[i], &cm, def_ht);
                 
             }
         }
@@ -404,14 +545,22 @@ class_meta compile_doge(char* file) {
         mpc_err_print(r.error);
         mpc_err_delete(r.error);
     }
-    printf("%s\n", cm.class_name);
-    field_meta* value = (field_meta*)hashtable_get(cm.field_table, "k");
-    printf("%s\n", value->field_name);
-    printf("%c\n", value->type);
-    def_meta* def_value = (def_meta*)hashtable_get(cm.def_table, "compute");
-    printf("%s\n", def_value->command_array[2]);
-    // printf("%d\n", atoi(value->value));
-    printf("%d\n", cm.size);
+    printf("加载的类名为:%s\n", cm.class_name);
+    printf("加载的属性个数为:%d\n", cm.field_count);
+    for (int i = 0; i < cm.field_count; i++){
+        printf("加载的属性为:%s\n", cm.field_array[i]);
+
+    }
+    printf("加载的方法个数为:%d\n", cm.def_count);
+    for (int i = 0; i < cm.def_count; i++){
+        printf("加载的方法为:%s\n", cm.def_array[i]);
+        def_meta* dm = (def_meta*) hashtable_get(cm.def_table, cm.def_array[i]);
+        printf("方法%s命令如下\n", cm.def_array[i]);
+        for (int j = 0; j < dm->command_count; j++){
+            printf("%s\n", dm->command_array[j]);
+        }
+    }
+    
     fclose(fp);
     return cm;
     

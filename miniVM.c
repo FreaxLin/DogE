@@ -5,11 +5,14 @@
 #include "method_area.h"
 #include "miniVM.h"
 
+static int heap_size = 100;
 
+static free_space_pointer* fsp;
 
 void bootstrap(class_meta* cm, char* def){
 
-    
+    fsp = allocate_heap_space(heap_size);
+    printf("初始化堆%dB空间\n", heap_size);
 
     printf("开始执行%s方法\n", def);
     def_meta* start = get_def(cm, def);
@@ -71,6 +74,7 @@ int run_command(class_meta* cm, stack_frame* sf, def_meta* def, int command_inde
 
     if (strstr(command_header, "init")){
         temp = strtok(NULL, "#");
+        new_object(cm, temp);
     }
     
     command_index++;
@@ -110,6 +114,19 @@ int run_jump(stack_frame* sf, int pre, int next){
     }else{
         return next;
     }
+}
+
+void* new_object(class_meta* cm, char* class_name){
+    int size = sizeof(object_header) + cm->size;
+    void* object = find_free_space(fsp, size);
+    //标志位为1;
+    *(int*)object = 1;
+    *(int*)(object + 4) = cm->size;
+    for (int i = 0; i < cm->field_count; i++){
+        char* field = cm->field_array[i];
+        // cm->field_table
+    }
+    return object;
 }
 
 

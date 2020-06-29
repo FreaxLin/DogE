@@ -13,3 +13,7 @@ typedef struct{
     int label;
     int size;
 }object_header;
+
+void* find_free_space(free_space_pointer* header, int size);
+void add_free_space(free_space_pointer* header, void* space_address, int size);
+free_space_pointer* allocate_heap_space(int size);

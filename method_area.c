@@ -30,3 +30,7 @@ void field_meta_delete(field_meta* fm){
 def_meta* get_def(class_meta* cm, char* def_name){
     return (def_meta*) hashtable_get(cm->def_table, def_name);
 }
+
+field_meta* get_filed(class_meta* cm, char* field_name){
+    return (field_meta*) hashtable_get(cm->field_table, field_name);
+}

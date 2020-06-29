@@ -37,5 +37,5 @@ typedef struct{
 field_meta* field_meta_new();
 
 void command_array_expansion(char** command_array);
-
 def_meta* get_def(class_meta* cm, char* def_name);
+field_meta* get_filed(class_meta* cm, char* field_name);

@@ -545,23 +545,10 @@ class_meta compile_doge(char* file) {
         mpc_err_print(r.error);
         mpc_err_delete(r.error);
     }
-    printf("加载的类名为:%s\n", cm.class_name);
-    printf("加载的属性个数为:%d\n", cm.field_count);
-    for (int i = 0; i < cm.field_count; i++){
-        printf("加载的属性为:%s\n", cm.field_array[i]);
-
-    }
-    printf("加载的方法个数为:%d\n", cm.def_count);
-    for (int i = 0; i < cm.def_count; i++){
-        printf("加载的方法为:%s\n", cm.def_array[i]);
-        def_meta* dm = (def_meta*) hashtable_get(cm.def_table, cm.def_array[i]);
-        printf("方法%s命令如下\n", cm.def_array[i]);
-        for (int j = 0; j < dm->command_count; j++){
-            printf("%s\n", dm->command_array[j]);
-        }
-    }
+    
     
     fclose(fp);
     return cm;
     
 }
+

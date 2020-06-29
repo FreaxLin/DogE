@@ -103,17 +103,3 @@ void run_command(char* command){
 
 }
 
-
-char* test(){
-    char a[4] = "abc\0";
-    char* b = (char*) malloc(sizeof(char) * 4);
-    b[0] = a[0];
-    b[1] = a[1];
-    return b;
-}
-
-int main(int argc, char **argv){
-    char* c = test();
-    printf("%s\n", c);
-    
-}   

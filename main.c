@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include "dogec.h"
+#include "stack.h"
 
 static const struct option long_opts[] = {
     {"help", no_argument, NULL, 'h'},
@@ -15,8 +16,28 @@ void usage(){
     printf("%s\n", "options:");
     printf("\t -h, --help \n"
            "\t -c, --complie=FILE 编译文件的路径\n"
-           "\t -m, --main=FILE 启动程序的方法\n"
+           "\t -m, --main=def 启动程序的方法\n"
     );
+}
+
+void print_class(class_meta* cm){
+    printf("加载的类名为:%s\n", cm->class_name);
+    printf("加载的属性个数为:%d\n", cm->field_count);
+    for (int i = 0; i < cm->field_count; i++){
+        printf("加载的属性为:%s\n", cm->field_array[i]);
+
+    }
+    printf("加载的方法个数为:%d\n", cm->def_count);
+    for (int i = 0; i < cm->def_count; i++){
+        printf("加载的方法为:%s\n", cm->def_array[i]);
+        def_meta* dm = (def_meta*) hashtable_get(cm->def_table, cm->def_array[i]);
+        printf("方法局部变量表大小%d\n", dm->size);
+        printf("方法局部变量表个数%d\n", dm->nums);
+        printf("方法%s命令如下\n", cm->def_array[i]);
+        for (int j = 0; j < dm->command_count; j++){
+            printf("%s\n", dm->command_array[j]);
+        }
+    }
 }
 
 int main(int argc, char **argv) {
@@ -26,7 +47,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    char *str;
+    char *start_def;
     int c;
     int long_index;
     char* file_path;
@@ -36,8 +57,7 @@ int main(int argc, char **argv) {
                 file_path = optarg;
                 break;
             case 'm':
-                str = optarg;
-                printf("2: %s\n", optarg);
+                start_def = optarg;
                 break;
             case 'h':
             default:
@@ -57,8 +77,11 @@ int main(int argc, char **argv) {
     }
 
     init_compile();
-    class_meta cm;
-    compile_doge(file_path);
+    class_meta cm = compile_doge(file_path);
+    print_class(&cm);
+    
+    def_meta* start = get_def(&cm, start_def);
+
 
     destory_compile();
 

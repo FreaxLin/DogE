@@ -26,3 +26,7 @@ void field_meta_delete(field_meta* fm){
     }
     free(fm);
 }
+
+def_meta* get_def(class_meta* cm, char* def_name){
+    (def_meta*) hashtable_get(cm->def_table, def_name);
+}

@@ -337,7 +337,7 @@ void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
                 j++;
             }
 
-            char* command = generate_command("set_", dm->nums - 1, NULL);
+            char* command = generate_command("objectset_", dm->nums - 1, NULL);
            
             char* new_command = (char*) malloc(6 + strlen(class_name));
             strcpy(new_command, "init#");

@@ -19,12 +19,30 @@ void* find_free_space(free_space_pointer* header, int size){
         }
         if (temp->size > size){
             result = temp->free_address;
+            temp->size = temp->size - size;
             temp->free_address = temp->free_address + size;
             return result;
         }
         temp = temp->next;
     }
     return result;
+}
+
+void gc(void* heap_header, void** objects, int count){
+    for (int i = 0; i < count; i++){
+        make(objects[i]);
+    }
+    
+}
+
+void sweep(void* heap_header){
+
+    
+
+}
+void mark(void* object){
+    //标志位为1;
+    *(int*)object = 1;
 }
 
 void add_free_space(free_space_pointer* header, void* space_address, int size){

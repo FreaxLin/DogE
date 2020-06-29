@@ -28,3 +28,6 @@ void destory_operate_stack(operate_stack* os);
 stack_frame init_stack_frame(int operate_stack_size, int local_var_num, int local_var_size, int* index);
 void push_operate_stack_int(operate_stack* os, int value);
 int pop_operate_stack_int(operate_stack* os);
+
+void push_operate_stack_object(operate_stack* os, void* value);
+void* pop_operate_stack_object(operate_stack* os);

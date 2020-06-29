@@ -90,4 +90,16 @@ stack_frame init_stack_frame(int operate_stack_size, int local_var_num, int loca
     return sf;
 }
 
+void push_operate_stack_object(operate_stack* os, void* value){
+    os->stack = value;
+    os->stack = os->stack + sizeof(void*);
+    os->count = os->count + 1;
+}
+void* pop_operate_stack_object(operate_stack* os){
+    os->stack = os->stack - sizeof(void*);
+    void* object = os->stack;
+    os->count = os->count - 1;
+    return object;
+}
+
 

@@ -3,7 +3,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include "dogec.h"
-#include "stack.h"
+#include "miniVM.h"
 
 static const struct option long_opts[] = {
     {"help", no_argument, NULL, 'h'},
@@ -79,11 +79,8 @@ int main(int argc, char **argv) {
     init_compile();
     class_meta cm = compile_doge(file_path);
     print_class(&cm);
-    
-    def_meta* start = get_def(&cm, start_def);
-
-
     destory_compile();
+    bootstrap(&cm, start_def);
 
     return 0;
     

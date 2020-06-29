@@ -1,22 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "stack.h"
 
-typedef struct {
-    int* offset;
-    void* local_var;
-}stack_slot;
-
-typedef struct{
-    int size;
-    int count;
-    void* header;
-    void* stack;
-}operate_stack;
-
-typedef struct {
-    stack_slot local_var_array;
-    operate_stack os;
-}stack_frame;
 
 stack_slot init_local_var(int num, int size, int* index){
     stack_slot slot;

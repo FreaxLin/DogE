@@ -324,6 +324,11 @@ void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
                         *index = dm->nums;
                         hashtable_set(ht, stmt_info->children[j]->contents, index);
                     
+                        if (dm->nums == 0){
+                            dm->off_set[dm->nums] = 0;
+                        }else{
+                            dm->off_set[dm->nums] = sizeof(void*);
+                        }
                         dm->nums = dm->nums + 1;
                         dm->size = dm->size + sizeof(void*);
                     }                    
@@ -335,7 +340,7 @@ void compile_procedure_stmt(mpc_ast_t* stmt_info, def_meta* dm, hashtable* ht){
             char* command = generate_command("set_", dm->nums - 1, NULL);
            
             char* new_command = (char*) malloc(6 + strlen(class_name));
-            strcpy(new_command, "#init#");
+            strcpy(new_command, "init#");
             strcat(new_command, class_name);
             dm->command_array[dm->command_count] = new_command;
             dm->command_count = dm->command_count + 1;
@@ -396,6 +401,12 @@ void compile_procedure_decls(mpc_ast_t* decls_info, def_meta* dm, hashtable* ht)
                     dm->command_array[dm->command_count] = command;
                     dm->command_count = dm->command_count + 1;
                 }
+                
+                if (dm->nums == 0){
+                    dm->off_set[dm->nums] = 0;
+                }else{
+                    dm->off_set[dm->nums] = field_size;
+                }    
                 dm->nums = dm->nums + 1;
                 dm->size = dm->size + field_size;
             }
@@ -473,6 +484,7 @@ void compile_procedure(mpc_ast_t* t, class_meta* cm, hashtable* ht){
     cm->def_count = cm->def_count + 1;
     dm->nums = 0;
     dm->size = 0;
+    dm->off_set = (int*) malloc(10 * sizeof(int));
     dm->command_count = 0;
     dm->command_array = (char**) malloc(20 * sizeof(char *));
 

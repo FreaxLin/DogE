@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    char *start_def;
+    char *start_def = "compute";
     int c;
     int long_index;
     char* file_path;
@@ -68,7 +68,6 @@ int main(int argc, char **argv) {
 
     struct stat s_buf;
     stat(file_path, &s_buf);
-    char** file_paths[1];
     int file_number = 0;
     if (S_ISDIR(s_buf.st_mode)){
         printf("目录:%s\n", file_path);
@@ -80,6 +79,7 @@ int main(int argc, char **argv) {
     class_meta cm = compile_doge(file_path);
     print_class(&cm);
     destory_compile();
+    
     bootstrap(&cm, start_def);
 
     return 0;

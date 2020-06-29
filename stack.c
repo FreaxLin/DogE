@@ -17,16 +17,16 @@ void destory_local_var(stack_slot* slot){
     free(slot->local_var);
 }
 
-void* get_local_var_value(stack_slot* slot, int index, void* value){
+void* get_local_var_value(stack_slot* slot, int index){
     int i = slot->offset[index];
-    void* position = slot->offset + i;
+    void* position = slot->local_var + i;
     return position;
 }
 
-void set_local_var_value(stack_slot* slot, int index, void* value){
+void set_local_var_value(stack_slot* slot, int index, void* value, int length){
     int i = slot->offset[index];
-    void* position = slot->offset + i;
-    for (int j = 0; j < i; j++){
+    void* position = slot->local_var + i;
+    for (int j = 0; j < length; j++){
         *((char*) (position + j)) = *((char*) (value + j));
     }
 }
@@ -48,6 +48,13 @@ void push_operate_stack_int(operate_stack* os, int value){
     *((int*)os->stack) = value;
     os->stack = os->stack + sizeof(int);
     os->count = os->count + 1;
+}
+
+int pop_operate_stack_int(operate_stack* os){
+    os->stack = os->stack - sizeof(int);
+    int i = *(int*)(os->stack);
+    os->count = os->count - 1;
+    return i;
 }
 
 void push_operate_stack_char(operate_stack* os, char c){
@@ -83,8 +90,4 @@ stack_frame init_stack_frame(int operate_stack_size, int local_var_num, int loca
     return sf;
 }
 
-
-void run_command(char* command){
-
-}
 

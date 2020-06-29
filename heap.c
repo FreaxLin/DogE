@@ -1,17 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct _SPACE_POINTER{
-    int size;
-    struct _SPACE_POINTER* next;
-    struct _SPACE_POINTER* pre;
-    void* free_address;
-}free_space_pointer;
-
-typedef struct{
-    int label;
-    int size;
-}object_header;
+#include "heap.h"
 
 void* find_free_space(free_space_pointer* header, int size){
     free_space_pointer* temp = header;
@@ -57,8 +46,3 @@ free_space_pointer* allocate_heap_space(int size){
     return header;
 }
 
-
-
-int main(int argc, char** argv){
-    allocate_heap_space(10);
-}

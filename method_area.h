@@ -27,9 +27,11 @@ typedef struct{
     char* def_name;
     char* return_type;
     int size;
+    int* off_set;
     int nums;
     int command_count;
     char** command_array;
+
 }def_meta;
 
 field_meta* field_meta_new();

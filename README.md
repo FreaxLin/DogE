@@ -30,6 +30,14 @@ Class Test{
 使用标记清除算法
 
 ## example
+### 编译程序
+gcc main.c dogec.c method_area.c util.c miniVM.c stack.c heap.c ./extern_dependency/mpc.c ./extern_dependency/hashtable.c -o main
+### 执行
+./main -c/Users/sai/Doge/example/Numberc.doge  -mcompute
+
+其中 -c参数为代码文件路径 -m参数为开始执行的方法
+
+输出如下
 ```
 加载的类名为:Test
 加载的属性个数为:2

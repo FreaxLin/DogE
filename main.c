@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    char *start_def = "compute";
+    char *start_def;;
     int c;
     int long_index;
     char* file_path;

@@ -26,9 +26,14 @@ void* get_local_var_value(stack_slot* slot, int index){
 void set_local_var_value(stack_slot* slot, int index, void* value, int length){
     int i = slot->offset[index];
     void* position = slot->local_var + i;
-    for (int j = 0; j < length; j++){
-        *((char*) (position + j)) = *((char*) (value + j));
+    if (length == 8){
+        *(void**)position = value;
+    }else{
+        for (int j = 0; j < length; j++){
+            *((char*) (position + j)) = *((char*) (value + j));
+        }
     }
+    
 }
 
 operate_stack init_operate_stack(int size){
@@ -91,13 +96,13 @@ stack_frame init_stack_frame(int operate_stack_size, int local_var_num, int loca
 }
 
 void push_operate_stack_object(operate_stack* os, void* value){
-    os->stack = value;
+    *(void**)os->stack = value;
     os->stack = os->stack + sizeof(void*);
     os->count = os->count + 1;
 }
 void* pop_operate_stack_object(operate_stack* os){
     os->stack = os->stack - sizeof(void*);
-    void* object = os->stack;
+    void* object = *(void**)os->stack;
     os->count = os->count - 1;
     return object;
 }

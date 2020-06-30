@@ -28,7 +28,7 @@ void bootstrap(class_meta* cm, char* def){
     while (command_index != -1){
         command_index = run_command(cm, &sf, start, command_index);
     }
-    
+    printf("%s方法执行完毕,虚拟机退出\n", def);
 }
 
 int run_command(class_meta* cm, stack_frame* sf, def_meta* def, int command_index){
@@ -43,7 +43,7 @@ int run_command(class_meta* cm, stack_frame* sf, def_meta* def, int command_inde
     char* command_header = temp;
 
     if (strstr(command_header, "set") || strstr(command_header, "push") || strstr(command_header, "print") 
-        || strstr(command_header, "st") || strstr(command_header, "objectset")){
+        || strstr(command_header, "st") || strstr(command_header, "object")){
         char* pos = strchr(temp, '_');
         if (pos != NULL){
             local_var_index = atoi(pos+1);
@@ -65,7 +65,7 @@ int run_command(class_meta* cm, stack_frame* sf, def_meta* def, int command_inde
         if (strstr(command_header, "st")){
             run_small_than(sf, local_var_index, value_pointer);
         }
-        if (strstr(command_header, "objectset")){
+        if (strstr(command_header, "object")){
             run_object_set(sf, local_var_index);
         }
     }
@@ -82,14 +82,13 @@ int run_command(class_meta* cm, stack_frame* sf, def_meta* def, int command_inde
 
     if (strstr(command_header, "init")){
         temp = strtok(NULL, "#");
-        void* object = new_object(cm, temp);
+        void* object = new_object(cm, temp, sf);
         push_operate_stack_object(&(sf->os), object);
     }
 
     if (strstr(command_header, "add")){
         run_add(sf,0);
     }
-    
     
     command_index++;
     if (command_index < def->command_count){
@@ -153,12 +152,21 @@ int run_jump(stack_frame* sf, int pre, int next){
     }
 }
 
-void* new_object(class_meta* cm, char* class_name){
+void* new_object(class_meta* cm, char* class_name, stack_frame* sf){
     int header_len = sizeof(object_header);
     int size = header_len + cm->size;
     void* object = find_free_space(fsp, size);
     if (object == NULL){
         printf("堆空间不足,启动gc\n");
+        void* var_object = get_local_var_value(&(sf->local_var_array), 2);
+        void* used_object[1];
+        used_object[0] = *(void**)var_object;
+        fsp = gc(heap_header, used_object, 1, heap_size, fsp);
+        object = find_free_space(fsp, size);
+        if (object == NULL){
+            printf("out of memory\n");
+            exit(1);
+        }
     }
     //标志位为0;
     *(int*)object = 0;

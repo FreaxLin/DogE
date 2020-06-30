@@ -1,7 +1,6 @@
 # Doge
-
 一种模范java的小型语言
-示例
+语法示例如下:
 Class Test{
     int m = 1;
     int k;

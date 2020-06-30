@@ -37,6 +37,9 @@ gcc main.c dogec.c method_area.c util.c miniVM.c stack.c heap.c ./extern_depende
 
 其中 -c参数为代码文件路径 -m参数为开始执行的方法
 
+### 注意 
+代码写得非常粗糙，估计只有示例代码能跑通。
+
 输出如下
 ```
 加载的类名为:Test
